@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   NovaMed design tokens
+   ----------------------------------------------------------------------------
+   Palette is sampled from the client's logo cards (mint card / teal card).
+   Every pairing below was measured with WCAG 2.1 relative luminance before use.
+   See lib/contrast.test.mjs — `npm run test:contrast` re-verifies these numbers.
+
+   MEASURED CONTRAST (foreground on background):
+     ink       on surface    11.74  AAA   <- default body text
+     ink       on white      12.26  AAA
+     ink       on mame-bg     7.37  AAA   <- pink card, ink label
+     ink       on mint        7.04  AAA
+     ink       on detox-bg    6.06  AA
+     ink       on zolushka-bg 4.56  AA
+     white     on ink        12.26  AAA   <- dark panels
+     mint      on ink         7.04  AAA
+
+   MEASURED FAILURES — these combinations are forbidden by the rules below:
+     white     on mame-fg     3.42  large-only
+     white     on zolushka-fg 4.49  large-only (misses AA by 0.01)
+     white     on detox-fg    3.02  large-only
+     mame-fg   on surface     3.27  large-only
+     zolushka-fg on surface   4.30  large-only
+     detox-fg  on surface     2.89  FAILS even the 3:1 non-text threshold
+     teal      on surface     2.78  FAILS
+     white     on teal        2.90  FAILS
+     ink       on teal        4.23  large-only
+
+   THE CONTRACT
+   1. Anything FILLED with a pillar colour uses pillar-*-bg + --ink text.
+   2. pillar-*-fg is an ACCENT only: focus rings, borders >=2px, icon strokes,
+      liquid fills, progress. Never normal-size text on a light ground.
+   3. Dark panels use --ink as the ground, never --brand-teal. Teal cannot
+      carry body text against white OR ink, so it is a fill/scene colour only.
+   4. --detox-fg never appears as a hairline on --surface (2.89). On light
+      grounds detox identity is carried by --pillar-detox-bg.
+   5. NEVER dim text with opacity on a coloured ground. ink on zolushka-bg is
+      4.56, which leaves 0.06 of headroom: at 90% it falls to 3.89 and fails.
+      --color-ink-muted is likewise illegal on mint (4.02). On these grounds
+      hierarchy comes from weight and size. Verified by the opacity block in
+      lib/contrast.test.mjs.
+   ========================================================================== */
+
+@theme {
+  /* --- brand ------------------------------------------------------------ */
+  --color-teal: #44a5ae;
+  --color-mint: #99d1aa;
+  --color-ink: #123b3a;
+  --color-surface: #f6fbfa;
+
+  /* ink derivatives, both verified on --surface */
+  --color-ink-muted: #3d5f5e; /* 6.71 on surface — secondary body copy */
+  --color-ink-faint: #d9e8e6; /* hairlines, dividers — non-text only     */
+  --color-surface-sunk: #edf6f3; /* recessed sections; ink on it = 10.72 */
+
+  /* --- pillars ---------------------------------------------------------- */
+  --color-mame-bg: #fbb5cf;
+  --color-mame-fg: #ff3882;
+  --color-zolushka-bg: #4faabc;
+  --color-zolushka-fg: #2f8192;
+  --color-detox-bg: #87c764;
+  --color-detox-fg: #5ba632;
+
+  /* --- type ------------------------------------------------------------- */
+  --font-display: var(--font-unbounded), "Trebuchet MS", sans-serif;
+  --font-body: var(--font-golos), -apple-system, "Segoe UI", sans-serif;
+
+  /* scale: 12/14/16/20/24/32/48/64 — no arbitrary sizes */
+  --text-2xs: 0.75rem;
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.5rem;
+  --text-xl: 2rem;
+  --text-2xl: 3rem;
+  --text-3xl: 4rem;
+
+  /* --- geometry: radii taken from the logo card proportions -------------- */
+  --radius-card: 1.75rem;
+  --radius-tile: 1rem;
+  --radius-sm: 0.625rem;
+
+  /* --- motion: 150 micro / 250 component / 400 orchestrated -------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-soft: cubic-bezier(0.64, 0, 0.78, 0);
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible focus on every interactive element. Never removed. */
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Touch targets: 44px floor, per WCAG 2.5.5 */
+  button,
+  a[role="button"],
+  [role="button"],
+  input[type="submit"] {
+    min-height: 44px;
+  }
+
+  /* Lenis */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  ::selection {
+    background: var(--color-mint);
+    color: var(--color-ink);
+  }
+}
+
+/* ============================================================================
+   Utilities
+   ========================================================================== */
+
+@utility measure {
+  max-width: 65ch;
+}
+
+/* Scroll-reveal start state.
+   Hidden ONLY when <html> carries `.js`, which the inline script in the locale
+   layout adds before first paint. No JS, broken JS, or reduced motion all fall
+   through to plainly visible content. anime.js then drives the real reveal. */
+@utility reveal {
+  html.js & {
+    transition:
+      opacity 420ms var(--ease-out-soft),
+      transform 420ms var(--ease-out-soft);
+  }
+
+  html.js &:not([data-revealed="true"]) {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* ============================================================================
+   Reduced motion — disables decoration, keeps everything readable and usable.
+   The loader becomes an instant skip rather than a shortened sequence.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  [class*="reveal"] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ============================================================================
+   FAQ disclosure
+   <details> gives us keyboard and screen-reader behaviour for free. This just
+   animates the reveal where the browser supports it, and is a plain toggle
+   everywhere else.
+   ========================================================================== */
+
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 250ms var(--ease-out-soft),
+      content-visibility 250ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+}
