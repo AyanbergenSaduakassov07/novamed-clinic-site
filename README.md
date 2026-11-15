@@ -2,6 +2,13 @@
 
 Bilingual (Russian / Kazakh) marketing site for NovaMed, an IV therapy clinic in Aktobe, Kazakhstan, where every booking path ends in WhatsApp.
 
+## Screenshots
+
+![Russian home page hero with the three IV-therapy packages](docs/assets/hero-ru.png)
+![Russian procedures page with the three package cards and filter](docs/assets/services-ru.png)
+![Kazakh locale home page hero](docs/assets/hero-kz.png)
+<img src="docs/assets/mobile-ru.png" width="260" alt="Russian home page at 390x844 mobile viewport">
+
 ## Why I built it
 
 Built as client work for the clinic, which shares a building with the KDL Olymp diagnostic lab. The goal was a fast, accessible static site that sends a patient to a pre-filled WhatsApp chat in as few taps as possible. Pieces the client had not supplied yet (final logo vectors, prices, drip compositions, clinic photography) render honest fallbacks and are marked in-file; nothing is invented.
