@@ -15,7 +15,7 @@ This is a marketing site built for the clinic. The NovaMed name, logo, brand col
 - Russian at `/`, Kazakh at `/kz`; all copy in `messages/{ru,kk}.json` with identical keys.
 - Seven page types (home, about, services, service detail, gallery, contacts, Olymp partner page), 16 statically prerendered pages.
 - WhatsApp booking through one helper, `whatsappUrl(message)`, with pre-translated pre-filled messages.
-- Service-picker quiz, FAQ, contact form, map link, LocalBusiness structured data, sitemap, robots, hreflang.
+- Service-picker quiz, FAQ, contact form, map link, sitemap, robots, hreflang.
 - 3D IV-stand hero (react-three-fiber) as a progressive enhancement with an SVG fallback; loader skipped under `prefers-reduced-motion`.
 - Colour contract enforced by a test: `npm run test:contrast`.
 
