@@ -1,65 +1,100 @@
-# NovaMed — сайт клиники инфузионной терапии, Актобе
+# NovaMed website
 
-Marketing site for NovaMed, an IV therapy clinic in Aktobe sharing a building
-with the KDL Olymp diagnostic lab.
+Bilingual (Russian / Kazakh) marketing site for NovaMed, an IV therapy clinic in Aktobe, Kazakhstan, where every booking path ends in WhatsApp.
 
-Russian at the root, Kazakh under `/kz`. Every booking path ends in WhatsApp.
+## Why I built it
 
----
+Built as client work for the clinic, which shares a building with the KDL Olymp diagnostic lab. The goal was a fast, accessible static site that sends a patient to a pre-filled WhatsApp chat in as few taps as possible. Pieces the client had not supplied yet (final logo vectors, prices, drip compositions, clinic photography) render honest fallbacks and are marked in-file; nothing is invented.
 
-## Run it
+## Content and trademarks
 
-```bash
-npm install
-npm run dev          # http://localhost:3000
-npm run build        # production build
-npm start            # serve the production build
-npm run lint         # eslint
-npm run test:contrast # verify the colour contract still holds
+This is a marketing site built for the clinic. The NovaMed name, logo, brand colours, copy, service descriptions and the contact details in `src/lib/contacts.ts` (clinic phone / WhatsApp, address, Instagram) belong to the clinic and appear here because they are already public on its channels. KDL Olymp is a separate company; its name is used only to describe the neighbouring lab. The MIT licence covers the source code only, not the clinic's branding or content, and does not grant any right to use them. The repository ships no photographs; `public/` is empty and the gallery renders a "photos coming" state until the clinic supplies images it has rights to.
+
+## Features
+
+- Russian at `/`, Kazakh at `/kz`; all copy in `messages/{ru,kk}.json` with identical keys.
+- Seven page types (home, about, services, service detail, gallery, contacts, Olymp partner page), 16 statically prerendered pages.
+- WhatsApp booking through one helper, `whatsappUrl(message)`, with pre-translated pre-filled messages.
+- Service-picker quiz, FAQ, contact form, map link, LocalBusiness structured data, sitemap, robots, hreflang.
+- 3D IV-stand hero (react-three-fiber) as a progressive enhancement with an SVG fallback; loader skipped under `prefers-reduced-motion`.
+- Colour contract enforced by a test: `npm run test:contrast`.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Request --> Proxy["proxy.ts (next-intl locale routing)"]
+  Proxy --> Pages["app/[locale]/* (static pages)"]
+  Pages --> Msgs["messages/ru.json, kk.json"]
+  Pages --> Lib["lib/contacts, services, quiz"]
+  Pages --> Hero["IVStandScene (lazy) / IVStandFallback"]
+  Lib --> WA["wa.me deep link"]
 ```
 
-Node 20+. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SITE_URL`
-before deploying, or `rel=canonical` and `hreflang` point at the wrong origin.
+## Tech stack
 
-## Stack
+Next.js 16 (App Router), React 19, TypeScript (strict), Tailwind CSS v4, next-intl 4, react-three-fiber + drei, anime.js 4, Lenis. Intended deploy target: Vercel.
 
-| | |
-|---|---|
-| Framework | Next.js 16.3 (App Router) + React 19 |
-| Language | TypeScript, strict |
-| Styling | Tailwind CSS v4 (`@theme` tokens in `src/app/globals.css`) |
-| i18n | next-intl 4 — `ru` at `/`, `kk` at `/kz` |
-| Motion | anime.js v4 (loader + quiz only), Lenis (smooth scroll) |
-| 3D | react-three-fiber + drei, lazy and gated |
-| Deploy | Vercel |
+## Quickstart
 
-**The brief specified Next.js 15.** `create-next-app@latest` now ships 16.3,
-and every dependency here supports it (next-intl declares `^16`, R3F 9 wants
-React `>=19 <19.3` and we are on 19.2). Starting a new client project on an
-older major had no upside. The App Router code is identical either way — to pin
-back to 15, change `next` in `package.json` and reinstall.
+```bash
+npm ci
+cp .env.example .env.local   # set NEXT_PUBLIC_SITE_URL
+npm run dev                  # http://localhost:3000
+npm run build && npm start
+```
 
-## Layout
+Node 20+.
+
+## Configuration
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | in production | Canonical origin (no trailing slash) for canonical, hreflang, sitemap, robots |
+
+## Testing
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run test:contrast   # WCAG contrast pairings that must pass and must stay banned
+npm run build
+```
+
+These four run in CI. There are no component or end-to-end tests. Earlier Lighthouse and axe-core results from the original build were run by hand and are not reproduced in CI.
+
+## Project structure
 
 ```
 src/
-├─ app/[locale]/          route tree, one folder per page
-├─ components/
-│  ├─ brand/              logo mark, wordmark lockup, cursive tagline
-│  ├─ home/               homepage sections + the 3D hero
-│  ├─ layout/             Nav, Footer, ContactDock
-│  ├─ motion/             Reveal (CSS), SmoothScroll (Lenis)
-│  ├─ services/           catalog list + filter
-│  └─ ui/                 Button, Container, icons, headings
-├─ i18n/                  routing, request config, client namespace list
-├─ lib/                   contacts, services, quiz, gallery, site, contrast test
-└─ proxy.ts               locale middleware (Next 16 renamed this from middleware.ts)
-messages/{ru,kk}.json     all copy, both locales, key-for-key identical
+  app/[locale]/    route tree, one folder per page
+  components/      brand, home, layout, motion, services, ui
+  i18n/            routing and request config
+  lib/             contacts, services, quiz, gallery, contrast test
+  proxy.ts         locale middleware
+messages/          ru.json, kk.json
 ```
+
+## Status and limitations
+
+- Production-shaped but pending client assets: logo vectors, cursive tagline, Olymp mark, prices, drip compositions and photography are placeholders.
+- The Instagram block links out; it is not a live feed.
+- The hero is react-three-fiber, not a hosted Spline scene.
+- The contact form has no backend; it hands off to WhatsApp.
+
+## Credits
+
+Fonts: Unbounded and Golos Text (SIL OFL). Libraries as listed in `package.json`. KDL Olymp is the clinic's neighbouring lab.
+
+## Licence
+
+Code: MIT (see `LICENSE`). Clinic branding and content: see "Content and trademarks".
 
 ---
 
-## The colour contract
+## Design notes
+
+### The colour contract
 
 `src/app/globals.css` opens with a measured contrast table and five rules.
 **Read it before touching a colour.** The short version:
@@ -77,7 +112,7 @@ messages/{ru,kk}.json     all copy, both locales, key-for-key identical
 `npm run test:contrast` asserts all of it, including the combinations that must
 stay *banned*. It fails the build loudly if a hex changes.
 
-## The design
+### The design
 
 Grounded in what an infusion clinic actually is: fluid settling in a bag.
 
@@ -96,7 +131,7 @@ Grounded in what an infusion clinic actually is: fluid settling in a bag.
 
 Type: Unbounded (display) + Golos Text (body), both variable, both Cyrillic-native.
 
-## Motion
+### Motion
 
 One orchestrated moment — the loader — and restraint everywhere else.
 
@@ -112,7 +147,7 @@ It is a fixed overlay over an already-laid-out hero, so it never shifts layout.
 Scroll reveals are pure CSS transitions with a stagger delay. anime.js is
 dynamically imported and only reaches the browser for the loader and the quiz.
 
-## The 3D hero
+### The 3D hero
 
 `IVStandScene.tsx` builds a real IV stand in react-three-fiber: pole, castor
 base, cross bar, three pillar-coloured bags with liquid settled in the bottom,
@@ -135,44 +170,3 @@ Set `FORCE_SCENE_EVERYWHERE = true` in `Hero.tsx` to always upgrade at idle.
 needs an account and a manual publish step, so it cannot be produced from a
 terminal. This is coded instead and lives behind one `<IVStandScene>` boundary —
 dropping in a Spline embed later is a one-file swap.
-
-## Contact
-
-`src/lib/contacts.ts` is the only place the phone number lives. Every booking
-CTA goes through `whatsappUrl(message)`, which encodes an already-translated
-message into a `wa.me` deep link. No component builds that URL itself.
-
-There are no star ratings, review counts or numeric scores anywhere, by design.
-
-## Audit
-
-Production build, Lighthouse via the installed Chrome:
-
-| | mobile | desktop |
-|---|---|---|
-| Performance | 90 | 97–98 |
-| Accessibility | **100** | **100** |
-| Best Practices | **100** | **100** |
-| SEO | 100 | 100 |
-| CLS | **0** | **0** |
-| Total blocking time | 0 ms | 0 ms |
-
-`axe-core` (WCAG 2.0/2.1 A + AA): **0 violations** across all 7 page types in
-both locales.
-
-Observed FCP and LCP on a throttled mobile profile are ~126ms; Lighthouse's
-mobile LCP figure is its *simulated* (Lantern) estimate, which charges a
-render-delay against hydration.
-
-SEO scores 92 when tested on `localhost` because the canonical points at the
-production domain — it is 100 once `NEXT_PUBLIC_SITE_URL` matches the origin.
-
-## Deploy
-
-Push to a Git repo, import in Vercel, set `NEXT_PUBLIC_SITE_URL`. All 16 pages
-(7 types × 2 locales) prerender as static HTML.
-
-**`novamed.kz` was available** at the time of writing, along with
-`novamedaktobe.kz`, `novamed-aktobe.kz` and `novamedclinic.kz`. `.kz` requires a
-Kazakh registrar and a BIN, which ТОО «НоваМед» has. Register it before someone
-else does.
